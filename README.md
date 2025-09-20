@@ -1,168 +1,125 @@
-Protein Binding Site Prediction with GNN and Diffusion Models
-A robust machine learning pipeline for predicting protein binding sites using Graph Neural Networks (GNN) and Diffusion Models. This project addresses the common challenge of performance degradation on test sets by implementing advanced techniques including quality-controlled data augmentation, domain adaptation, and ensemble learning.
-
-🎯 Key Features
-Diffusion-based Data Augmentation: Generate high-quality synthetic positive samples using DDPM (Denoising Diffusion Probabilistic Models)
-
-Robust GNN Architecture: Enhanced graph neural network with domain adaptation and focal loss
-
-Quality Control: Intelligent filtering of generated samples based on similarity and diversity metrics
-
-Cross-Validation Training: Strict separation of augmented and original data for reliable validation
-
-Ensemble Prediction: Combine multiple models for improved test performance
-
-Comprehensive Evaluation: Detailed performance metrics and visualization tools
-
-📦 Project Structure
+项目结构
 text
-.
-├── configs/                    # Configuration files
-│   ├── config.py              # Base configuration
-│   ├── balanced_training_config.py  # Balanced training settings
-│   ├── pure_diffusion_config.py     # Diffusion-only configuration
-│   └── robust_training_config.py    # Robust training settings
-├── models/                     # Model architectures
-│   ├── gnn_model.py           # Base GNN model
-│   ├── improved_gnn_model.py  # Enhanced GNN with regularization
-│   └── ddpm_diffusion_model.py # Diffusion model implementation
-├── data/                      # Data handling
-│   ├── data_loader.py         # Protein dataset loader
-│   └── data_loader_from_raw.py # Raw data processing
-├── pipelines/                 # Training pipelines
-│   ├── main.py               # Original pipeline
-│   ├── improved_pipeline.py  # Enhanced pipeline
-│   ├── pure_diffusion_pipeline.py # Diffusion-only pipeline
-│   └── robust_pipeline.py    # Robust training pipeline
-├── evaluation/               # Evaluation tools
-│   ├── advanced_model_evaluation.py # Comprehensive evaluation
-│   └── enhanced_training_strategies.py # Training strategies
-├── utils/                    # Utility functions
-│   └── retest_models.py      # Model retesting utility
-└── README.md                # This file
-🚀 Quick Start
-Installation
-Clone the repository:
+├── config/                    # 配置文件
+│   ├── config.py              # 基础配置
+│   ├── balanced_training_config.py    # 平衡训练配置
+│   └── pure_diffusion_config.py       # 纯扩散模型配置
+├── models/                    # 模型定义
+│   ├── gnn_model.py           # 基础GNN模型
+│   ├── improved_gnn_model.py  # 改进版GNN模型
+│   └── ddpm_diffusion_model.py # 扩散模型
+├── data_loader.py             # 数据加载与处理
+├── main.py                    # 主训练管道
+├── improved_pipeline.py       # 改进版训练管道
+├── robust_pipeline.py         # 鲁棒性训练管道
+├── enhanced_training_strategies.py  # 增强训练策略
+└── evaluation/                # 评估模块
+    ├── advanced_model_evaluation.py
+    └── retest_models.py
+工作流程
+1. 数据准备阶段
+使用ESM-2模型提取蛋白质序列的嵌入表示
 
+将每个蛋白质转换为图结构（节点=残基，边=KNN连接）
+
+标注结合位点信息（正样本）和非结合位点（负样本）
+
+2. 扩散模型训练
+仅使用训练集中的正样本训练扩散模型
+
+学习正样本的分布特征
+
+成为"正样本生成器"
+
+3. 数据增强
+对每个蛋白质图，计算需要生成的正样本数量
+
+使用训练好的扩散模型生成新样本
+
+进行质量控制和多样性筛选
+
+将新样本合并到原始图中，重建图结构
+
+4. GNN模型训练
+使用增强后的数据训练图神经网络
+
+支持多种GNN架构（GAT、GCN、GraphSAGE）
+
+包含正则化、早停等机制
+
+5. 评估与测试
+在多测试集上进行全面评估
+
+提供多种评估指标（F1、AUC-PR、MCC等）
+
+生成详细的性能报告
+
+快速开始
+环境配置
 bash
-git clone https://github.com/your-username/protein-binding-prediction.git
-cd protein-binding-prediction
-Install dependencies:
+pip install torch torch-geometric esm
+数据准备
+将蛋白质数据文件放在Raw_data/目录下，格式为：
 
+text
+>protein_name
+AminoAcidSequence
+0001000100001000... (结合位点标签)
+运行基础管道
 bash
-pip install -r requirements.txt
-Basic Usage
-Prepare your protein data in the appropriate format (see Data Format section)
-
-Run the training pipeline:
-
+python main.py
+运行改进版管道
 bash
 python improved_pipeline.py
-Evaluate model performance:
-
+运行鲁棒性管道
 bash
-python advanced_model_evaluation.py
-📊 Data Format
-Input data should be in text files with the following format:
+python robust_pipeline.py
+配置选项
+项目提供多种配置策略：
 
-text
->PROTEIN_NAME
-PROTEIN_SEQUENCE
-BINDING_LABELS
-Example:
+基础配置 (config.py): 标准1:1平衡训练
 
-text
->1A2B_PROTEIN
-MAGLRGLRI...
-0001000100...
-⚙️ Configuration
-The project uses modular configuration files. Key parameters include:
+平衡训练 (balanced_training_config.py): 针对测试性能优化
 
-target_ratio: Target positive sample ratio (default: 0.15)
+纯扩散配置 (pure_diffusion_config.py): 仅使用扩散模型增强
 
-diffusion_epochs: Number of diffusion training epochs
+关键配置参数：
 
-gnn_hidden_dim: GNN hidden dimension size
+target_ratio: 目标正样本比例
 
-quality_threshold: Quality filter threshold for generated samples
+diffusion_epochs: 扩散模型训练轮数
 
-use_domain_adaptation: Enable/disable domain adaptation
+use_focal_loss: 是否使用Focal Loss
 
-🎯 Performance Optimization
-This project implements several advanced techniques to improve test performance:
+quality_threshold: 生成样本质量阈值
 
-Conservative Data Balancing: Target 15% positive ratio instead of 50%
+预期结果
+运行完成后，项目将生成：
 
-Quality-Controlled Generation: Filter generated samples based on similarity to real data
+训练好的模型文件
 
-Domain Adaptation: Add domain regularization to improve generalization
+增强后的数据集
 
-Enhanced Regularization: Higher dropout rates and focal loss
+详细的性能评估报告
 
-Strict Cross-Validation: Separate augmented and original data in validation
+不同配置的对比分析
 
-📈 Results
-The robust pipeline typically achieves:
+技术亮点
+扩散模型应用: 将先进的扩散模型技术应用于生物信息学领域
 
-5-15% improvement in F1 score on test sets
+质量控制: 对生成样本进行严格的质量筛选
 
-Better balance between precision and recall
+域适应: 提高模型在不同数据集间的泛化能力
 
-Improved specificity while maintaining sensitivity
+集成学习: 结合多个模型提升最终性能
 
-More consistent performance across different test datasets
+全面评估: 提供多角度的模型性能分析
 
-🛠️ Customization
-Adding New Models
-Create a new model class in the models/ directory
+注意事项
+需要足够的GPU内存（建议16GB以上）
 
-Implement the required interface methods
+ESM模型加载需要一定时间
 
-Update the pipeline to use your model
+大规模蛋白质可能需要调整图大小限制
 
-Modifying Training Strategies
-Edit the configuration files to adjust parameters
-
-Modify the training loops in the pipeline files
-
-Implement new loss functions or regularization techniques
-
-🤝 Contributing
-We welcome contributions! Please feel free to submit pull requests or open issues for:
-
-Bug fixes
-
-New features
-
-Performance improvements
-
-Documentation updates
-
-📄 License
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-🙏 Acknowledgments
-ESM (Evolutionary Scale Modeling) for protein embeddings
-
-PyTorch Geometric for GNN implementation
-
-The diffusion models research community
-
-📚 Citation
-If you use this code in your research, please cite:
-
-bibtex
-@software{protein_binding_prediction_2024,
-  title = {Protein Binding Site Prediction with GNN and Diffusion Models},
-  author = {Your Name},
-  year = {2024},
-  url = {https://github.com/your-username/protein-binding-prediction}
-}
-🆘 Support
-For questions and support, please:
-
-Check the existing issues on GitHub
-
-Create a new issue with detailed information about your problem
-
-Contact the maintainers at 3165619783@qq.com
+不同数据集可能需要调整目标比例参数
